@@ -25,6 +25,7 @@ import pathlib
 import argparse
 import itertools
 import subprocess
+import platform
 
 
 # default logging configuration
@@ -401,11 +402,11 @@ class Symbol:
         """
         flags = ['--wide', '--syms']
         readelf_proc = subprocess.Popen([readelf_exe, *flags, elf_file],
-                                        stdout=subprocess.PIPE)
+                                        stdout=subprocess.PIPE, universal_newlines=True)
 
         # parse lines
         log.info('Using readelf symbols regex: %s' % cls.pattern.pattern)
-        symbols = [Symbol.from_readelf_line(l.decode()) for l in readelf_proc.stdout]
+        symbols = [Symbol.from_readelf_line(l) for l in readelf_proc.stdout]
         n_ignored = len(list(filter(lambda x: x is None, symbols)))
         symbols = list(filter(None, symbols))
 
@@ -446,12 +447,12 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
     # use posix format
     flags = ['--portability', '--line-numbers']
     nm_proc = subprocess.Popen([nm_exe, *flags, elf_file],
-                               stdout=subprocess.PIPE)
+                               stdout=subprocess.PIPE, universal_newlines=True)
 
     # process nm output
     fileinfo_dict = {}
     for line in nm_proc.stdout:
-        m = pattern.match(line.decode())
+        m = pattern.match(line)
         if not m:
             continue
 
@@ -499,15 +500,15 @@ def demangle_symbol_names(symbols, cppfilt_exe='c++filt'):
     """
     flags = []
     cppfilt_proc = subprocess.Popen(
-        [cppfilt_exe, *flags], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        [cppfilt_exe, *flags], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
 
     for symbol in symbols:
         # write the line and flush it
         # not super-efficient but writing all at once for large list of symbols
         # can block the program (probably due to buffering)
-        cppfilt_proc.stdin.write((symbol.name + '   \n').encode())
+        cppfilt_proc.stdin.write((symbol.name + '   \n'))
         cppfilt_proc.stdin.flush()
-        new_name = cppfilt_proc.stdout.readline().decode().strip()
+        new_name = cppfilt_proc.stdout.readline().strip()
         symbol.name = new_name
     cppfilt_proc.stdin.close()
 
@@ -666,11 +667,11 @@ class Section:
         """
         flags = ['--wide', '--section-headers']
         readelf_proc = subprocess.Popen([readelf_exe, *flags, elf_file],
-                                        stdout=subprocess.PIPE)
+                                        stdout=subprocess.PIPE, universal_newlines=True)
 
         # parse lines
         log.info('Using readelf sections regex: %s' % cls.pattern.pattern)
-        sections = [Section.from_readelf_line(l.decode()) for l in readelf_proc.stdout]
+        sections = [Section.from_readelf_line(l) for l in readelf_proc.stdout]
         sections = list(filter(None, sections))
 
         if readelf_proc.wait(3) != 0:
@@ -998,6 +999,8 @@ def main():
 
     def get_exe(name):
         cmd = args.toolchain_triplet + name
+        if 'Windows' == platform.system():
+            cmd = cmd + '.exe'
         assert shutil.which(cmd) is not None, \
             'Executable "%s" could not be found!' % cmd
         return args.toolchain_triplet + name
