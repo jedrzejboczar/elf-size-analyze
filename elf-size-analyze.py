@@ -458,7 +458,7 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
 
         # parse the file info
         file, line = None, None
-        fileinfo = m['fileinfo'].strip()
+        fileinfo = m.group('fileinfo').strip()
         if len(fileinfo) > 0:
             # check for line number
             line_i = fileinfo.rfind(':')
@@ -470,7 +470,7 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
             # try to make the path more readable
             file = os.path.normpath(file)
 
-        fileinfo_dict[m['name']] = file, line
+        fileinfo_dict[m.group('name')] = file, line
 
     if nm_proc.wait(3) != 0:
         raise subprocess.CalledProcessError(nm_proc.returncode,
@@ -1041,7 +1041,7 @@ def main():
         secs = filter(section_key, sections)
         secs_str = ', '.join(s.name for s in secs)
         log.info('Considering sections: ' + secs_str)
-        filtered = filter(lambda symbol: section_key(sections_dict[symbol.section]),
+        filtered = filter(lambda symbol: section_key(sections_dict[symbol.section] if symbol.section in sections_dict else None),
                           symbols)
         out, test = itertools.tee(filtered)
         if len(list(test)) == 0:
@@ -1056,16 +1056,16 @@ ERROR: No symbols from given section found or all were ignored!
         Section.print(sections)
 
     if args.rom:
-        print_tree('ROM', filter_symbols(lambda sec: sec.occupies_rom()))
+        print_tree('ROM', filter_symbols(lambda sec: sec and sec.occupies_rom()))
 
     if args.ram:
-        print_tree('RAM', filter_symbols(lambda sec: sec.occupies_ram()))
+        print_tree('RAM', filter_symbols(lambda sec: sec and sec.occupies_ram()))
 
     if args.use_sections:
         nums = list(map(int, args.use_sections))
         #  secs = list(filter(lambda s: s.num in nums, sections))
         name = 'SECTIONS: %s' % ','.join(map(str, nums))
-        print_tree(name, filter_symbols(lambda sec: sec.num in nums))
+        print_tree(name, filter_symbols(lambda sec: sec and sec.num in nums))
 
     return True
 
