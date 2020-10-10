@@ -1041,7 +1041,7 @@ def main():
         secs = filter(section_key, sections)
         secs_str = ', '.join(s.name for s in secs)
         log.info('Considering sections: ' + secs_str)
-        filtered = filter(lambda symbol: section_key(sections_dict[symbol.section] if symbol.section in sections_dict else None),
+        filtered = filter(lambda symbol: section_key(sections_dict.get(symbol.section, None)),
                           symbols)
         out, test = itertools.tee(filtered)
         if len(list(test)) == 0:
