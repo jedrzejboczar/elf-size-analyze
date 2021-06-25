@@ -599,8 +599,8 @@ class Section:
         self.info = kwargs['info']
         self.alignment = kwargs['alignment']
 
-    def is_read_only(self):
-        return self.Flag.WRITE not in self.flags
+    def is_writable(self):
+        return self.Flag.WRITE in self.flags
 
     def occupies_memory(self):
         # these are the only relevant sections for us
@@ -613,7 +613,7 @@ class Section:
             self.type not in ['NOBITS']
 
     def occupies_ram(self):
-        return self.occupies_memory() and not self.is_read_only()
+        return self.occupies_memory() and self.is_writable()
 
     @classmethod
     def from_readelf_line(cls, line):
