@@ -346,7 +346,7 @@ class Symbol:
         r'\s+',
         g('value', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('size', r'[0-9]+'),
+        g('size', r'(0x)?[0-9A-Fa-f][0-9A-Fa-f]*'), # accept dec & hex numbers
         r'\s+',
         g('type', r'\S+'),
         r'\s+',
@@ -377,7 +377,7 @@ class Symbol:
         m = m.groupdict()
         m['num'] = int(m['num'])
         m['value'] = int(m['value'], 16)
-        m['size'] = int(m['size'])  # suprisingly in decimal
+        m['size'] = int(m['size']) if m['size'].isdecimal() else int(m['size'], 16)
         try:  # for numeric sections
             m['section'] = int(m['section'])
         except ValueError:
