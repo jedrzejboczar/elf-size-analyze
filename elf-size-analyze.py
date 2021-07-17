@@ -346,7 +346,7 @@ class Symbol:
         r'\s+',
         g('value', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('size', r'[0-9]+'),
+        g('size', r'(0x)?[0-9A-Fa-f][0-9A-Fa-f]*'), # accept dec & hex numbers
         r'\s+',
         g('type', r'\S+'),
         r'\s+',
@@ -377,7 +377,7 @@ class Symbol:
         m = m.groupdict()
         m['num'] = int(m['num'])
         m['value'] = int(m['value'], 16)
-        m['size'] = int(m['size'])  # suprisingly in decimal
+        m['size'] = int(m['size']) if m['size'].isdecimal() else int(m['size'], 16)
         try:  # for numeric sections
             m['section'] = int(m['section'])
         except ValueError:
@@ -599,8 +599,8 @@ class Section:
         self.info = kwargs['info']
         self.alignment = kwargs['alignment']
 
-    def is_read_only(self):
-        return self.Flag.WRITE not in self.flags
+    def is_writable(self):
+        return self.Flag.WRITE in self.flags
 
     def occupies_memory(self):
         # these are the only relevant sections for us
@@ -613,7 +613,7 @@ class Section:
             self.type not in ['NOBITS']
 
     def occupies_ram(self):
-        return self.occupies_memory() and not self.is_read_only()
+        return self.occupies_memory() and self.is_writable()
 
     @classmethod
     def from_readelf_line(cls, line):
