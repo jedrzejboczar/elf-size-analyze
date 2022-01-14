@@ -807,6 +807,8 @@ class SymbolsTreeByPath:
         if reset:
             for node, depth in self.tree_root.pre_order():
                 node.cumulative_size = None
+            # Avoid errors when there are no orphans but the root Node('?')
+            self.orphans.cumulative_size = 0
         for node, depth in self.tree_root.post_order():
             if node.parent is None:
                 continue
