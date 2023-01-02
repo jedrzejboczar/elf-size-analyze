@@ -28,9 +28,6 @@ import itertools
 import subprocess
 import platform
 
-from ndicts.ndicts import NestedDict
-from mergedeep import merge
-
 # default logging configuration
 log = logging.getLogger('elf-size-analyze')
 console = logging.StreamHandler()
@@ -903,25 +900,34 @@ class SymbolsTreeByPath:
     def _generate_node_dict(self, min_size):
         # generate dict of nodes
         nodeDict = dict()
+        get_key = lambda node: node.data.name if node.is_symbol() else node.data
+
         for node, depth in self.tree_root.pre_order():
-            nd = NestedDict()
             if node.is_root():
                 continue
             elif not (node.is_symbol() or node.is_path()):
                 raise Exception('Wrong symbol type encountered')
             elif node.is_symbol() and node.data.size < min_size:
                 continue
+
             nodePath = list()
             iterNode = node
-            nodePath.insert(0, iterNode.data.name if iterNode.is_symbol() else iterNode.data)
-            while iterNode.parent.data != None:
-                nodePath.insert(0, "children")
-                nodePath.insert(0, iterNode.parent.data.name if iterNode.parent.is_symbol() else iterNode.parent.data)
-                iterNode = iterNode.parent    
+            while iterNode.parent is not None:
+                nodePath.append(iterNode)
+                iterNode = iterNode.parent
+            nodePath.reverse()
 
-            nd[tuple(nodePath)+("name",)] = node.data.name if node.is_symbol() else node.data
-            nd[tuple(nodePath)+("cumulative_size",)] = node.cumulative_size
-            merge(nodeDict, nd.to_dict())            
+            children = nodeDict
+            for n in nodePath[:-1]:
+                children = children[get_key(n)]['children']
+
+            key = get_key(node)
+            children[key] = {
+                'name': get_key(node),
+                'cumulative_size': node.cumulative_size,
+            }
+            if not node.is_symbol():
+                children[key]['children'] = {}
 
         return nodeDict
 
@@ -1050,7 +1056,7 @@ def main():
     sections = Section.extract_sections_info(args.elf, get_exe('readelf'))
     sections_dict = {sec.num: sec for sec in sections}
 
-    def print_tree(header, symbols):
+    def prepare_tree(symbols):
         tree = SymbolsTreeByPath(symbols)
         if not args.no_merge_paths:
             tree.merge_paths(args.fish_paths)
@@ -1062,6 +1068,10 @@ def main():
             tree.sort(key=lambda symbol: symbol.size, reverse=True)
         if not args.no_totals:
             tree.calculate_total_size()
+
+        return tree
+
+    def print_tree(header, tree):
         min_size = math.inf if args.files_only else args.min_size
         lines = tree.generate_printable_lines(
             header=header, colors=not args.no_color, human_readable=args.human_readable,
@@ -1069,22 +1079,11 @@ def main():
         for line in lines:
             line.print()
 
-    def create_json(header, symbols):
-        tree = SymbolsTreeByPath(symbols)
-        if not args.no_merge_paths:
-            tree.merge_paths(args.fish_paths)
-        if not args.no_cumulative_size:
-            tree.accumulate_sizes()
-        if args.sort_by_name:
-            tree.sort(key=lambda symbol: symbol.name, reverse=False)
-        else:  # sort by size
-            tree.sort(key=lambda symbol: symbol.size, reverse=True)
-        if not args.no_totals:
-            tree.calculate_total_size()
+    def print_json(header, tree):
         min_size = math.inf if args.files_only else args.min_size
         nodedict = tree._generate_node_dict(min_size=min_size)
-        with open(args.elf.replace(".elf", "") + "_" + header + "Analysis.json", "w") as jsonFile:
-            json.dump(nodedict, jsonFile) 
+            
+        print(json.dumps(nodedict))
 
     def filter_symbols(section_key):
         secs = filter(section_key, sections)
@@ -1104,23 +1103,19 @@ ERROR: No symbols from given section found or all were ignored!
     if args.print_sections:
         Section.print(sections)
 
+    print_func = print_json if args.json else print_tree
+
     if args.rom:
-        if args.json:
-            create_json('ROM', filter_symbols(lambda sec: sec and sec.occupies_rom()))
-        else:
-            print_tree('ROM', filter_symbols(lambda sec: sec and sec.occupies_rom()))
+        print_func('ROM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_rom())))
 
     if args.ram:
-        if args.json:
-            create_json('RAM', filter_symbols(lambda sec: sec and sec.occupies_ram()))
-        else:
-            print_tree('RAM', filter_symbols(lambda sec: sec and sec.occupies_ram()))
+        print_func('RAM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_ram())))
 
     if args.use_sections:
         nums = list(map(int, args.use_sections))
         #  secs = list(filter(lambda s: s.num in nums, sections))
         name = 'SECTIONS: %s' % ','.join(map(str, nums))
-        print_tree(name, filter_symbols(lambda sec: sec and sec.num in nums))
+        print_func(name, filter_symbols(lambda sec: sec and sec.num in nums))
 
     return True
 
