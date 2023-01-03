@@ -18,6 +18,7 @@
 import os
 import re
 import sys
+import json
 import math
 import shutil
 import logging
@@ -26,7 +27,6 @@ import argparse
 import itertools
 import subprocess
 import platform
-
 
 # default logging configuration
 log = logging.getLogger('elf-size-analyze')
@@ -97,6 +97,8 @@ sections must have ALLOC flag and: for RAM - have WRITE flag, for ROM - not have
                                 help='print only files (to be used with cumulative size enabled)')
     printing_group.add_argument('-a', '--alternating-colors', action='store_true',
                                 help='use alternating colors when printing symbols')
+    printing_group.add_argument('-j', '--json', action='store_true',
+                                help='create json output')                           
 
     printing_group.add_argument('--no-demangle', action='store_true',
                                 help='disable demangling of C++ symbol names')
@@ -895,6 +897,40 @@ class SymbolsTreeByPath:
             protolines.append(self.Protoline(depth, node))
         return protolines
 
+    def _generate_node_dict(self, min_size):
+        # generate dict of nodes
+        nodeDict = dict()
+        get_key = lambda node: node.data.name if node.is_symbol() else node.data
+
+        for node, depth in self.tree_root.pre_order():
+            if node.is_root():
+                continue
+            elif not (node.is_symbol() or node.is_path()):
+                raise Exception('Wrong symbol type encountered')
+            elif node.is_symbol() and node.data.size < min_size:
+                continue
+
+            nodePath = list()
+            iterNode = node
+            while iterNode.parent is not None:
+                nodePath.append(iterNode)
+                iterNode = iterNode.parent
+            nodePath.reverse()
+
+            children = nodeDict
+            for n in nodePath[:-1]:
+                children = children[get_key(n)]['children']
+
+            key = get_key(node)
+            children[key] = {
+                'name': get_key(node),
+                'cumulative_size': node.cumulative_size,
+            }
+            if not node.is_symbol():
+                children[key]['children'] = {}
+
+        return nodeDict
+
     def _add_field_strings(self, protolines, indent, human_readable):
         for line in protolines:
             indent_str = ' ' * indent * line.depth
@@ -1020,7 +1056,7 @@ def main():
     sections = Section.extract_sections_info(args.elf, get_exe('readelf'))
     sections_dict = {sec.num: sec for sec in sections}
 
-    def print_tree(header, symbols):
+    def prepare_tree(symbols):
         tree = SymbolsTreeByPath(symbols)
         if not args.no_merge_paths:
             tree.merge_paths(args.fish_paths)
@@ -1032,12 +1068,22 @@ def main():
             tree.sort(key=lambda symbol: symbol.size, reverse=True)
         if not args.no_totals:
             tree.calculate_total_size()
+
+        return tree
+
+    def print_tree(header, tree):
         min_size = math.inf if args.files_only else args.min_size
         lines = tree.generate_printable_lines(
             header=header, colors=not args.no_color, human_readable=args.human_readable,
             max_width=args.max_width, min_size=min_size, alternating_colors=args.alternating_colors)
         for line in lines:
             line.print()
+
+    def print_json(header, tree):
+        min_size = math.inf if args.files_only else args.min_size
+        nodedict = tree._generate_node_dict(min_size=min_size)
+            
+        print(json.dumps(nodedict))
 
     def filter_symbols(section_key):
         secs = filter(section_key, sections)
@@ -1057,17 +1103,19 @@ ERROR: No symbols from given section found or all were ignored!
     if args.print_sections:
         Section.print(sections)
 
+    print_func = print_json if args.json else print_tree
+
     if args.rom:
-        print_tree('ROM', filter_symbols(lambda sec: sec and sec.occupies_rom()))
+        print_func('ROM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_rom())))
 
     if args.ram:
-        print_tree('RAM', filter_symbols(lambda sec: sec and sec.occupies_ram()))
+        print_func('RAM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_ram())))
 
     if args.use_sections:
         nums = list(map(int, args.use_sections))
         #  secs = list(filter(lambda s: s.num in nums, sections))
         name = 'SECTIONS: %s' % ','.join(map(str, nums))
-        print_tree(name, filter_symbols(lambda sec: sec and sec.num in nums))
+        print_func(name, filter_symbols(lambda sec: sec and sec.num in nums))
 
     return True
 
