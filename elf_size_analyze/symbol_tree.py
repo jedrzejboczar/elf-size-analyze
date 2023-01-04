@@ -8,9 +8,10 @@ import math
 import os
 import pathlib
 
+from elf_size_analyze.color import Color
 from elf_size_analyze.misc import sizeof_fmt
 from elf_size_analyze.symbol import Symbol
-from elf_size_analyze.tree_node import TreeNode
+from elf_size_analyze.tree import TreeNode
 
 log = logging.getLogger('elf-size-analyze')
 

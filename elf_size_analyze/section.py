@@ -6,7 +6,8 @@ import logging
 import re
 import subprocess
 
-from elf_size_analyze.misc import g, sizeof_fmt
+from elf_size_analyze.color import Color
+from elf_size_analyze.misc import named_group, sizeof_fmt
 
 log = logging.getLogger('elf-size-analyze')
 
@@ -26,27 +27,27 @@ class Section:
     # Regex test: https://regex101.com/r/N3YQYw/1
     pattern_fields = [
         r'\s*',
-        r'\[\s*', g('num', r'\d+'), r'\]',
+        r'\[\s*', named_group('num', r'\d+'), r'\]',
         r'\s+',
-        g('name', r'\S+'),
+        named_group('name', r'\S+'),
         r'\s+',
-        g('type', r'\S+'),
+        named_group('type', r'\S+'),
         r'\s+',
-        g('address', r'[0-9a-fA-F]+'),
+        named_group('address', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('offset', r'[0-9a-fA-F]+'),
+        named_group('offset', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('size', r'[0-9a-fA-F]+'),
+        named_group('size', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('entry_size', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
+        named_group('entry_size', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
         r'\s+',
-        g('flags', r'\S*'),
+        named_group('flags', r'\S*'),
         r'\s+',
-        g('link', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
+        named_group('link', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
         r'\s+',
-        g('info', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
+        named_group('info', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
         r'\s+',
-        g('alignment', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
+        named_group('alignment', r'[0-9a-fA-F]+'),  # whatever it is we don't need it
         r'\s*'
     ]
     pattern = r'^{}$'.format(r''.join(pattern_fields))

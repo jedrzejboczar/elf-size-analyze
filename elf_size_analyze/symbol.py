@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 
-from elf_size_analyze.misc import g
+from elf_size_analyze.misc import named_group
 
 log = logging.getLogger('elf-size-analyze')
 
@@ -43,21 +43,21 @@ class Symbol:
     #      566: 200002a8    88 OBJECT  GLOBAL DEFAULT    8 hspi1
     pattern_fields = [
         r'\s*',
-        g('num', r'\d+'), r':',
+        named_group('num', r'\d+'), r':',
         r'\s+',
-        g('value', r'[0-9a-fA-F]+'),
+        named_group('value', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('size', r'(0x)?[0-9A-Fa-f][0-9A-Fa-f]*'), # accept dec & hex numbers
+        named_group('size', r'(0x)?[0-9A-Fa-f][0-9A-Fa-f]*'), # accept dec & hex numbers
         r'\s+',
-        g('type', r'\S+'),
+        named_group('type', r'\S+'),
         r'\s+',
-        g('bind', r'\S+'),
+        named_group('bind', r'\S+'),
         r'\s+',
-        g('visibility', r'\S+'),
+        named_group('visibility', r'\S+'),
         r'\s+',
-        g('section', r'\S+'),
+        named_group('section', r'\S+'),
         r'\s+',
-        g('name', r'.*'),
+        named_group('name', r'.*'),
     ]
     pattern = r'^{}$'.format(r''.join(pattern_fields))
     pattern = re.compile(pattern)
@@ -132,14 +132,14 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
     #   MemManage_Handler T 08004130 00000002	/some/path/file.c:80
     #   memset T 08000bf0 00000010
     pattern_fields = [
-        g('name', r'\S+'),
+        named_group('name', r'\S+'),
         r'\s+',
-        g('type', r'\S+'),
+        named_group('type', r'\S+'),
         r'\s+',
-        g('value', r'[0-9a-fA-F]+'),
+        named_group('value', r'[0-9a-fA-F]+'),
         r'\s+',
-        g('size', r'[0-9a-fA-F]+'),
-        g('fileinfo', r'.*'),
+        named_group('size', r'[0-9a-fA-F]+'),
+        named_group('fileinfo', r'.*'),
     ]
     pattern = r'^{}$'.format(r''.join(pattern_fields))
     pattern = re.compile(pattern)

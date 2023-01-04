@@ -3,7 +3,7 @@ Miscellaneous helper functions
 """
 
 # construct python regex named group
-def g(name, regex):
+def named_group(name, regex):
     return r'(?P<{}>{})'.format(name, regex)
 
 
