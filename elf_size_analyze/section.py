@@ -62,7 +62,7 @@ class Section:
         STRINGS = 'S'
         INFO = 'I'
         LINK_ORDER = 'L'
-        EXTRA_OS_PROCESSINg_REQUIRED = 'O'
+        EXTRA_OS_PROCESSING_REQUIRED = 'O'
         GROUP = 'G'
         TLS = 'T'
         COMPRESSED = 'C'
@@ -71,6 +71,10 @@ class Section:
         EXCLUDE = 'E'
         PURECODE = 'y'
         PROCESSOR_SPECIFIC = 'p'
+        PPC_VLE = 'v'
+        GNU_MBIND = 'D'
+        X86_64_LARGE = 'l'
+        GNU_RETAIN = 'R'
 
         @classmethod
         def to_string(cls, flag):
