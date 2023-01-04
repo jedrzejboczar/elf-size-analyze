@@ -4,6 +4,6 @@ This script is based on [size_report](https://github.com/zephyrproject-rtos/zeph
 
 Requires Python 3, readelf, nm and (optional) c++filt. To be able to extract path information about symbols from ELF file, the program should be compiled with debug information.
 
-Use `python elf-size-analyze.py -h` for usage info. 
+Use `python -m elf_size_analyze -h` for usage info. 
 
 ![Example output](example.jpg)
