@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-git-versioning"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[project]
+name = "elf-size-analyze"
+description = "Tool to extract information about symbols and sections from an ELF file and filters them."
+dynamic = ["version"]
+authors = [
+    {name = "Jedrzej Boczar"},
+    {name = "Dominic Kuschmierz"},
+    {name = "Adel Mamin"},
+    {name = "Amir Gonnen"}
+]
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Debuggers"
+]
+
+[project.optional-dependencies]
+dev = ["pylint==2.6.0", "pytest==7.2.0", "black==20.8b1"]
+
+[project.urls]
+"Homepage" = "https://github.com/jedrzejboczar/elf-size-analyze"
+"Bug Tracker" = "https://github.com/jedrzejboczar/elf-size-analyze/issues"
+
+[project.scripts]
+elf-size-analyze = "elf_size_analyze.__main__:main"
