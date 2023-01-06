@@ -30,6 +30,7 @@ from elf_size_analyze.symbol import (Symbol, add_fileinfo_to_symbols,
                                      demangle_symbol_names,
                                      extract_elf_symbols_fileinfo)
 from elf_size_analyze.symbol_tree import SymbolsTreeByPath
+from elf_size_analyze.html_output import generate_html_output
 
 # default logging configuration
 log = logging.getLogger('elf-size-analyze')
@@ -108,6 +109,14 @@ def main():
             
         print(json.dumps(nodedict))
 
+    def print_html(header, tree):
+        min_size = math.inf if args.files_only else args.min_size
+        nodedict = tree._generate_node_dict(min_size=min_size)
+        title = f"ELF size information for {os.path.basename(args.elf)} - {header}"
+        html = generate_html_output(nodedict, title, args.css)
+        print(html)
+
+
     def filter_symbols(section_key):
         secs = filter(section_key, sections)
         secs_str = ', '.join(s.name for s in secs)
@@ -127,6 +136,7 @@ ERROR: No symbols from given section found or all were ignored!
         Section.print(sections)
 
     print_func = print_json if args.json else print_tree
+    print_func = print_html if args.html else print_tree
 
     if args.rom:
         print_func('ROM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_rom())))
