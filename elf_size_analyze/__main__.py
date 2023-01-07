@@ -138,7 +138,7 @@ ERROR: No symbols from given section found or all were ignored!
         nums = list(map(int, args.use_sections))
         #  secs = list(filter(lambda s: s.num in nums, sections))
         name = 'SECTIONS: %s' % ','.join(map(str, nums))
-        print_func(name, filter_symbols(lambda sec: sec and sec.num in nums))
+        print_func(name, prepare_tree(filter_symbols(lambda sec: sec and sec.num in nums)))
 
     return True
 
