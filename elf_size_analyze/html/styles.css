@@ -1,0 +1,43 @@
+tr:nth-child(even) {
+    background-color: #efefef;
+}
+
+tr:nth-child(odd) {
+    background-color: #e0e0e0;
+}
+
+table {
+    border-spacing: 0px;
+    table-layout:fixed;
+    width: 100%;
+}
+
+h3 {
+    font-family: "Verdana";
+    font-size: 14pt;
+}
+
+td {
+    font-family: "Verdana";
+    font-size: 10pt;
+}
+
+tr:hover {
+    background: #adf0c2 !important;
+}
+
+tr.collapsed {
+    background-color: #c0dbc9;
+    font-style: italic;
+}
+
+tr.collapsed td:first-child::after {
+    content: " …";
+}
+
+.collapse-buttons {
+    margin: 1px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
