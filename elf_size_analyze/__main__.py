@@ -135,8 +135,12 @@ ERROR: No symbols from given section found or all were ignored!
     if args.print_sections:
         Section.print(sections)
 
-    print_func = print_json if args.json else print_tree
-    print_func = print_html if args.html else print_tree
+    if args.json:
+        print_func = print_json
+    elif args.html:
+        print_func = print_html
+    else:
+        print_func = print_tree
 
     if args.rom:
         print_func('ROM', prepare_tree(filter_symbols(lambda sec: sec and sec.occupies_rom())))
