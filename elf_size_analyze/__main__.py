@@ -42,7 +42,7 @@ log.addHandler(console)
 
 
 def main():
-    result = False
+    result = 1
     args = parse_args()
 
     # adjust verbosity
@@ -150,10 +150,8 @@ ERROR: No symbols from given section found or all were ignored!
         name = 'SECTIONS: %s' % ','.join(map(str, nums))
         print_func(name, prepare_tree(filter_symbols(lambda sec: sec and sec.num in nums)))
 
-    return True
+    return 0
 
 
 if __name__ == "__main__":
-    result = main()
-    if not result:
-        sys.exit(1)
+    sys.exit(main())
