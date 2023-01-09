@@ -65,12 +65,14 @@ sections must have ALLOC flag and: for RAM - have WRITE flag, for ROM - not have
                                 help='print only files (to be used with cumulative size enabled)')
     printing_group.add_argument('-a', '--alternating-colors', action='store_true',
                                 help='use alternating colors when printing symbols')
-    printing_group.add_argument('-j', '--json', action='store_true',
-                                help='create json output')
-    printing_group.add_argument('-W', '--html', action='store_true',
-                                help='create HTML output')
     printing_group.add_argument('-c', '--css',
-                                help='path to custom css for HTML output')                                
+                                help='path to custom css for HTML output')
+
+    output_type = printing_group.add_mutually_exclusive_group()
+    output_type.add_argument('-j', '--json', action='store_true',
+                                help='create json output')
+    output_type.add_argument('-W', '--html', action='store_true',
+                                help='create HTML output')
 
     printing_group.add_argument('--no-demangle', action='store_true',
                                 help='disable demangling of C++ symbol names')
