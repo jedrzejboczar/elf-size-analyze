@@ -12,10 +12,10 @@ def generate_html_output(node_dict, title, custom_css=None):
     table_content = ""
 
     custom_css = custom_css or DEFAULT_CSS
-    with open(custom_css) as f:
+    with open(custom_css, encoding='utf-8') as f:
         css_styles = f.read()
 
-    with open(JAVASCRIPT) as f:
+    with open(JAVASCRIPT, encoding='utf-8') as f:
         javascript = f.read()
 
     def _print_children(node, level=0):
