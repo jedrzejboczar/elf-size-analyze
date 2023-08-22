@@ -120,6 +120,17 @@ class Symbol:
         return symbols
 
 
+def detect_nm_is_llvm(nm_exe):
+    proc = subprocess.run([nm_exe, '--version'],
+                          check=True, capture_output=True, universal_newlines=True)
+    if proc.stdout.lower().find('llvm') >= 0:
+        return True
+    # startswith(), not find() because llvm-nm contains "compatible with GNU nm"
+    if not proc.stdout.lower().strip().startswith('gnu nm'):
+        log.warning('Could not detect nm version, assuming GNU nm')
+    return False
+
+
 def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
     """
     Uses binutils 'nm' to find files and lines where symbols from an ELF
@@ -131,7 +142,9 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
     # e.g.
     #   MemManage_Handler T 08004130 00000002	/some/path/file.c:80
     #   memset T 08000bf0 00000010
-    pattern_fields = [
+    gnu_flags = ['--portability', '--line-numbers']
+    llvm_flags = ['--portability', '--print-file-name']
+    gnu_fields = [
         named_group('name', r'\S+'),
         r'\s+',
         named_group('type', r'\S+'),
@@ -141,12 +154,27 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
         named_group('size', r'[0-9a-fA-F]+'),
         named_group('fileinfo', r'.*'),
     ]
-    pattern = r'^{}$'.format(r''.join(pattern_fields))
+    # llvm-nm version of output:
+    #   /some/path/file.c: memset t 800a2ea 6e
+    llvm_fields = [
+        named_group('fileinfo', r'[^:]*'),
+        r':\s+',
+        named_group('name', r'\S+'),
+        r'\s+',
+        named_group('type', r'\S+'),
+        r'\s+',
+        named_group('value', r'[0-9a-fA-F]+'),
+        r'\s+',
+        named_group('size', r'[0-9a-fA-F]+'),
+    ]
+
+    is_llvm = detect_nm_is_llvm(nm_exe)
+    flags, fields = (llvm_flags, llvm_fields) if is_llvm else (gnu_flags, gnu_fields)
+
+    pattern = r'^{}$'.format(r''.join(fields))
     pattern = re.compile(pattern)
     log.info('Using nm symbols regex: %s' % pattern.pattern)
 
-    # use posix format
-    flags = ['--portability', '--line-numbers']
     nm_proc = subprocess.Popen([nm_exe, *flags, elf_file],
                                stdout=subprocess.PIPE, universal_newlines=True)
 
