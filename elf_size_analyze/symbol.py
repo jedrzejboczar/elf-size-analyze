@@ -131,7 +131,7 @@ def detect_nm_is_llvm(nm_exe):
     return False
 
 
-def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
+def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm', to_lowercase=False):
     """
     Uses binutils 'nm' to find files and lines where symbols from an ELF
     executable were defined.
@@ -198,6 +198,9 @@ def extract_elf_symbols_fileinfo(elf_file, nm_exe='nm'):
                 file = fileinfo
             # try to make the path more readable
             file = os.path.normpath(file)
+
+        if file is not None and to_lowercase:
+            file = file.lower()
 
         fileinfo_dict[m.group('name')] = file, line
 

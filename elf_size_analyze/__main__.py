@@ -69,7 +69,7 @@ def main():
 
     # process symbols
     symbols = Symbol.extract_elf_symbols_info(args.elf, get_exe('readelf'))
-    fileinfo = extract_elf_symbols_fileinfo(args.elf, get_exe('nm'))
+    fileinfo = extract_elf_symbols_fileinfo(args.elf, get_exe('nm'), to_lowercase=args.lowercase_paths)
     add_fileinfo_to_symbols(fileinfo, symbols)
 
     # demangle only after fileinfo extraction!

@@ -74,6 +74,8 @@ sections must have ALLOC flag and: for RAM - have WRITE flag, for ROM - not have
     output_type.add_argument('-W', '--html', action='store_true',
                                 help='create HTML output')
 
+    printing_group.add_argument('--lowercase-paths', action='store_true',
+                                help='treat all file paths as lowercase (may fix issues on Windows)')
     printing_group.add_argument('--no-demangle', action='store_true',
                                 help='disable demangling of C++ symbol names')
     printing_group.add_argument('--no-merge-paths', action='store_true',
