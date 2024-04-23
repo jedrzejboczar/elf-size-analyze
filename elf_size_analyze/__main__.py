@@ -84,7 +84,7 @@ def main():
         tree = SymbolsTreeByPath(symbols)
         if not args.no_merge_paths:
             tree.merge_paths(args.fish_paths)
-        if not args.no_cumulative_size:
+        if not args.no_cumulative_size or args.json or args.html:
             tree.accumulate_sizes()
         if args.sort_by_name:
             tree.sort(key=lambda symbol: symbol.name, reverse=False)
