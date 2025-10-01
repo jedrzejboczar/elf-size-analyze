@@ -3,6 +3,7 @@ Generator functions for HTML output
 """
 
 import os
+import html
 
 THIS_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 DEFAULT_CSS = os.path.join(THIS_DIR, 'styles.css')
@@ -23,7 +24,7 @@ def generate_html_output(node_dict, title, custom_css=None):
         for x, y in node.items():
             table_content += f"""
             <tr class="collapsible level-{level}">
-                <td style='padding-left:{10*level}px;word-break:break-all;word-wrap:break-word'>{x}</td>
+                <td style='padding-left:{10*level}px;word-break:break-all;word-wrap:break-word'>{html.escape(x)}</td>
                 <td width='200px' align='right'>{y['cumulative_size']}</td>
             </tr>
     """
@@ -41,14 +42,14 @@ def generate_html_output(node_dict, title, custom_css=None):
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>{title}</title>
+        <title>{html.escape(title)}</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>{css_styles}</style>
         <script>{javascript}</script>
     </head>
     <body>
-        <h3>{title}</h3>
+        <h3>{html.escape(title)}</h3>
         <div class="collapse-buttons">
             <span>Collapse</span>
             <button class="all">All</button>
