@@ -103,6 +103,7 @@ Path: {path}
 
 def make_graph_kwargs(df, **kwargs):
     return dict(
+        # TODO: use distinct color per child_id
         marker=dict(colors=pcolors.qualitative.Plotly),
         ids=df['path'],
         labels=df['label'],
@@ -121,9 +122,6 @@ def make_sunburst(df, **kwargs):
 def make_others(cls, df, **kwargs):
     return cls(
         maxdepth=5,
-        # marker=dict(colors=pcolors.qualitative.Plotly),
-        text=df['description'],
-        textinfo='text',
         hoverinfo='text',
         hovertext=df['description'],
         **make_graph_kwargs(df, **kwargs)
@@ -150,7 +148,6 @@ def show(json_data: dict, type: GraphType, *, maxdepth=4, minfontsize=10, **kwar
     df = make_dataframe(iter_entries_from_json(json_data))
     make_graph = get_maker(type)
     fig = go.Figure(make_graph(df))
-    fig.update_layout(uniformtext=dict(minsize=minfontsize, mode='hide'))
     fig.show()
 
 
