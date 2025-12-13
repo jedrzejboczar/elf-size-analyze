@@ -24,12 +24,12 @@ Main output format is an ASCII tree, but it supports other formats, e.g. JSON (f
 
 For normal usage it's best to install from [PyPI](https://pypi.org/project/elf-size-analyze/):
 ```
-pip install elf-size-analyze
+pip install --upgrade elf-size-analyze
 ```
 
 There are some optional dependencies not installed by default, e.g. to include support for Plotly graphs output use
 ```
-pip insatll elf-size-analyze[plotly]
+pip insatll --upgrade elf-size-analyze[plotly]
 ```
 
 For development it's recommended to install from sources in virtual environment in editable mode:
