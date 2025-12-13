@@ -1,2 +1,2 @@
-include elf_size_analyze/html/index.js
-include elf_size_analyze/html/styles.css
+include src/elf_size_analyze/html/index.js
+include src/elf_size_analyze/html/styles.css
