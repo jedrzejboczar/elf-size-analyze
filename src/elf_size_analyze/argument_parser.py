@@ -73,6 +73,17 @@ sections must have ALLOC flag and: for RAM - have WRITE flag, for ROM - not have
                                 help='create json output')
     output_type.add_argument('-W', '--html', action='store_true',
                                 help='create HTML output')
+    output_type.add_argument('--plotly', action='store_true',
+                                help='create interactive Plotly graph')
+
+    plotly_group = parser.add_argument_group(
+        'Plotly', 'Options for Plotly graph')
+    plotly_group.add_argument('--plotly-type', choices=['sunburst', 'treemap', 'icicle'], default='icicle',
+                              help='Type of graph to produce')
+    plotly_group.add_argument('--plotly-max-depth', type=int, default=4,
+                              help='Max graph depth to show at a time')
+    plotly_group.add_argument('--plotly-min-font-size', type=int, default=10,
+                              help='Minimum font size to show (hides smaller for performance)')
 
     printing_group.add_argument('--no-demangle', action='store_true',
                                 help='disable demangling of C++ symbol names')

@@ -1,0 +1,172 @@
+import os
+import enum
+import json
+import argparse
+import textwrap
+import collections
+import dataclasses
+from typing import Iterable
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.colors as pcolors
+
+from elf_size_analyze import misc
+
+
+@dataclasses.dataclass
+class Entry:
+    name: str  # symbol name
+    parent: str  # parent "ID", i.e the `path` field
+    cumulative_size: int
+    path: str # full path to symbol, used as "ID" to avoid problems with repeated symbol names
+    child_id: int # id of this child in parent's children
+    children_count: int # number of children of this node
+
+def iter_entries_from_json(json_data: dict) -> Iterable[Entry]:
+    def iter_node(node: dict, parent: Entry = None, child_id=0) -> Iterable[Entry]:
+        entry = Entry(
+            name=node['name'],
+            cumulative_size=node['cumulative_size'],
+            parent=parent.path if parent is not None else '',
+            path=node['name'] if parent is None else os.path.join(parent.path, node['name']),
+            child_id=child_id,
+            children_count=len(node['children']) if 'children' in node else 0,
+        )
+        yield entry
+        if 'children' in node:
+            for i, child in enumerate(node['children'].values()):
+                yield from iter_node(child, parent=entry, child_id=i)
+
+    # Start recursive iteration on top-level node
+    yield from iter_node(dict(
+        name='Total',
+        cumulative_size=sum(v['cumulative_size'] for v in json_data.values()),
+        children=json_data
+    ))
+
+
+def make_dataframe(entries: Iterable[Entry]) -> pd.DataFrame:
+    df = pd.DataFrame.from_records(dataclasses.asdict(e) for e in entries)
+
+    # Make data frame with index set to `path`, which is unique
+    by_path = df.set_index('path')
+
+    # Calculate the total size which is the size of the top-level node
+    df['total_size'] = by_path.at['Total', 'cumulative_size']
+
+    # Add some more metrics
+    df['parent_cumulative_size'] = df['parent'].map(by_path['cumulative_size'])
+    df['percent_parent'] = df['cumulative_size'] / df['parent_cumulative_size'] * 100
+    df['percent_total'] = df['cumulative_size'] / df['total_size'] * 100
+
+    # Generate descriptions
+    def make_human_size(row):
+        return misc.sizeof_fmt(row['cumulative_size'])
+
+    def make_label(row):
+        return '{}: {}'.format(row['name'], row['cumulative_size_human'])
+
+    def make_description(row):
+        return '''
+<b>{label} </b> <br>
+Size: {size} B <br>
+Percent: {percent:.1f}% <br>
+Parent percent: {parent_percent:.1f}% <br>
+Symbol: {symbol} <br>
+Path: {path}
+        '''.format(
+            label=row['label'],
+            size=row['cumulative_size'],
+            percent=row['percent_total'],
+            parent_percent=row['percent_parent'],
+            symbol=row['name'],
+            path=row['path'],
+        ).strip()
+        return f'{row["name"]}: {row["cumulative_size"]}'
+
+    df['cumulative_size_human'] = df.apply(make_human_size, axis=1)
+    df['label'] = df.apply(make_label, axis=1)
+    df['description'] = df.apply(make_description, axis=1)
+
+    # Replace the `object` types with explicit string types.
+    # This probably won't give any performance boost but the actual types will be be more verbose.
+    mapping = dict()
+    for i, t in enumerate(df.dtypes):
+        if t == 'object':
+            mapping[df.columns[i]] = 'string'
+    df = df.astype(mapping)
+
+    return df
+
+
+def make_graph_kwargs(df, **kwargs):
+    return dict(
+        marker=dict(colors=pcolors.qualitative.Plotly),
+        ids=df['path'],
+        labels=df['label'],
+        parents=df['parent'],
+        values=df['cumulative_size'],
+    )
+
+def make_sunburst(df, **kwargs):
+    return go.Sunburst(
+        maxdepth=5,
+        hoverinfo='text',
+        hovertext=df['description'],
+        **make_graph_kwargs(df, **kwargs)
+    )
+
+def make_others(cls, df, **kwargs):
+    return cls(
+        maxdepth=5,
+        # marker=dict(colors=pcolors.qualitative.Plotly),
+        text=df['description'],
+        textinfo='text',
+        hoverinfo='text',
+        hovertext=df['description'],
+        **make_graph_kwargs(df, **kwargs)
+    )
+
+def make_treemap(df, **kwargs):
+    return make_others(go.Treemap, df, **kwargs)
+
+def make_icicle(df, **kwargs):
+    return make_others(go.Icicle, df, **kwargs)
+
+
+class GraphType(enum.StrEnum):
+    SUNBURST = 'sunburst'
+    TREEMAP = 'treemap'
+    ICICLE = 'icicle'
+
+
+def get_maker(type: GraphType):
+    return globals()[f'make_{type}']
+
+
+def show(json_data: dict, type: GraphType, *, maxdepth=4, minfontsize=10, **kwargs):
+    df = make_dataframe(iter_entries_from_json(json_data))
+    make_graph = get_maker(type)
+    fig = go.Figure(make_graph(df))
+    fig.update_layout(uniformtext=dict(minsize=minfontsize, mode='hide'))
+    fig.show()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Show symbol size data as Plotly graph')
+    parser.add_argument('path', help='Path to JSON file with symbol data (as generated by `elf-size-analyze -j`)')
+    parser.add_argument('type', choices=GraphType, default='icicle', help='Type of graph to produce')
+    parser.add_argument('--max-depth', type=int, default=4, help='Max graph depth to show at a time')
+    parser.add_argument('--min-font-size', type=int, default=10, help='Minimum font size to show (hides smaller for performance)')
+    args = parser.parse_args()
+
+    with open(args.path) as f:
+        json_data = json.load(f)
+
+    show(json_data, args.type, maxdepth=args.max_depth, minfontsize=args.min_font_size)
+
+
+if __name__ == "__main__":
+    main()

@@ -27,6 +27,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pylint==2.6.0", "pytest==7.2.0", "black==20.8b1"]
+plotly = ['plotly==6.3.0', 'pandas==2.3.3', 'numpy==2.3.3']
 
 [project.urls]
 "Homepage" = "https://github.com/jedrzejboczar/elf-size-analyze"
@@ -34,3 +35,4 @@ dev = ["pylint==2.6.0", "pytest==7.2.0", "black==20.8b1"]
 
 [project.scripts]
 elf-size-analyze = "elf_size_analyze.__main__:main"
+elf-size-graph = "elf_size_analyze.plotly:main"

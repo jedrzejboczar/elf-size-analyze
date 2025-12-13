@@ -116,6 +116,18 @@ def main():
         html = generate_html_output(nodedict, title, args.css)
         print(html)
 
+    def print_plotly(header, tree):
+        min_size = math.inf if args.files_only else args.min_size
+        nodedict = tree._generate_node_dict(min_size=min_size)
+        try:
+            from elf_size_analyze import plotly
+        except ImportError as err:
+            msg = '''
+Could not import elf_size_analyze.plotly. Make sure optional dependencies have been installed,
+e.g. `pip install elf-size-analyze[plotly]`.
+            '''.strip().replace('\n', ' ')
+            raise RuntimeError(msg) from err
+        plotly.show(nodedict, args.plotly_type, maxdepth=args.plotly_max_depth, minfontsize=args.plotly_min_font_size)
 
     def filter_symbols(section_key):
         secs = filter(section_key, sections)
@@ -139,6 +151,8 @@ ERROR: No symbols from given section found or all were ignored!
         print_func = print_json
     elif args.html:
         print_func = print_html
+    elif args.plotly:
+        print_func = print_plotly
     else:
         print_func = print_tree
 
