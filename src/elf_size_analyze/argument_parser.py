@@ -45,6 +45,9 @@ sections must have ALLOC flag and: for RAM - have WRITE flag, for ROM - not have
                              help='toolchain triplet/path to prepend to binutils program names,'
                              + ' this is important for examining cross-compiled ELF files,'
                              + ' e.g `arm-none-eabi-` or `/my/path/arm-none-eabi-` or `/my/path/`')
+    basic_group.add_argument('--path-mapping', nargs=2, action='append', default=[],
+                             metavar=('PATH', 'REPLACEMENT'),
+                             help='Replace given path with another in the output.')
     basic_group.add_argument('-v', '--verbose', action='count',
                              help='increase verbosity, can be specified up to 3 times'
                              + ' (versobity levels: ERROR -> WARNING -> INFO -> DEBUG)')

@@ -76,6 +76,11 @@ def main():
     if not args.no_demangle:
         demangle_symbol_names(symbols, get_exe('c++filt'))
 
+    for path, replacement in args.path_mapping:
+        for s in symbols:
+            if s.file is not None:
+                s.file = s.file.replace(path, replacement)
+
     # load section info
     sections = Section.extract_sections_info(args.elf, get_exe('readelf'))
     sections_dict = {sec.num: sec for sec in sections}
