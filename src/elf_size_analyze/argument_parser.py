@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="""
 Prints report of memory usage of the given executable.
 Shows how different source files contribute to the total size.
-Uses inforamtion contained in ELF executable and binutils programs.
+Uses information contained in ELF executable and binutils programs.
 For best results the program should be compiled with maximum debugging information
 (e.g. GCC flag: `-g`, or more: `-ggdb3`).
     """, epilog="""
