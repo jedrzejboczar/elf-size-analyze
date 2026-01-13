@@ -29,7 +29,7 @@ pip install --upgrade elf-size-analyze
 
 There are some optional dependencies not installed by default, e.g. to include support for Plotly graphs output use
 ```
-pip insatll --upgrade elf-size-analyze[plotly]
+pip install --upgrade elf-size-analyze[plotly]
 ```
 
 For development it's recommended to install from sources in virtual environment in editable mode:
