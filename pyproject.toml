@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pylint==2.6.0", "pytest==7.2.0", "black==20.8b1"]
+dev = ["pylint>=3.0", "pytest>=8.0", "black>=24.0"]
 plotly = ['plotly==6.3.0', 'pandas==2.3.3', 'numpy==2.3.3']
 
 [project.urls]
